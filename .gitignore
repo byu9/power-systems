@@ -1,9 +1,9 @@
 # python bytecode
 __pycache__
+.ipynb_checkpoints
 
 # emacs backup files
 *~
 
 # cached downloads
-data/
-unpack/
+999-data/
