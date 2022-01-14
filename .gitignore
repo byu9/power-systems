@@ -1,2 +1,5 @@
 # python bytecode
 __pycache__
+
+# emacs backup files
+*~
