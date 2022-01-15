@@ -50,7 +50,8 @@ def parse_celsius(str_series):
 
 def read_csv_slices(filenames):
     dataframes = [read_csv(f) for f in filenames]
-    dataframe = pandas.concat(dataframes, axis='index', sort=True)
+    dataframe = pandas.concat(dataframes, axis='index')
+    dataframe.sort_index(axis='index', inplace=True)
 
     celsius, celsius_quality = parse_celsius(dataframe['TMP'].str)
 
