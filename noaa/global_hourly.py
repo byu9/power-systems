@@ -65,4 +65,4 @@ def read_csv_slices(filenames):
         'name': dataframe['NAME'],
         'celsius': celsius,
         'celsius_quality': celsius_quality,
-    })
+    }).drop_duplicates()
