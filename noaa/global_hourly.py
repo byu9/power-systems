@@ -55,7 +55,7 @@ def read_csv_slices(filenames):
     celsius, celsius_quality = parse_celsius(dataframe['TMP'].str)
 
     return DataFrame({
-        'station' : dataframe['STATION'].astype(float),
+        'station' : dataframe['STATION'],
         'latitude': dataframe['LATITUDE'].astype(float),
         'longitude': dataframe['LONGITUDE'].astype(float),
         'elevation': dataframe['ELEVATION'].astype(float),
