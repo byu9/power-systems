@@ -35,7 +35,8 @@ def read_csv(f):
                            header=0,
                            index_col='DATE',
                            parse_dates=['DATE'],
-                           dtype='str')
+                           dtype='str',
+                           sort=True)
 
 
 def parse_celsius(str_series):
