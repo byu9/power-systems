@@ -57,4 +57,4 @@ def read_csv_slices(filenames):
 
     dataframe.rename(columns=rename_columns, inplace=True)
 
-    return DataFrame(dataframe)
+    return DataFrame(dataframe).drop_duplicates()
