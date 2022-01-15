@@ -41,6 +41,7 @@ def read_csv_slices(filenames):
                                parse_dates=[0])
 
     dataframes = [read_csv(f) for f in filenames]
-    dataframe = pandas.concat(dataframes, axis='index', sort=True)
+    dataframe = pandas.concat(dataframes, axis='index')
+    dataframe.sort_index(axis='index', inplace=True)
 
     return DataFrame(dataframe)
