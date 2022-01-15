@@ -42,6 +42,19 @@ def read_csv_slices(filenames):
 
     dataframes = [read_csv(f) for f in filenames]
     dataframe = pandas.concat(dataframes, axis='index')
+    dataframe.index = dataframe.index.tz_localize('EST').tz_convert('UTC')
     dataframe.sort_index(axis='index', inplace=True)
+    dataframe.index.rename('utc_time', inplace=True)
+
+    rename_columns = {
+        # old_name                          : new_name
+        'Name'                              : 'zone',
+        'PTID'                              : 'ptid',
+        'LBMP ($/MWHr)'                     : 'lbmp',
+        'Marginal Cost Losses ($/MWHr)'     : 'lbmp_loss',
+        'Marginal Cost Congestion ($/MWHr)' : 'lbmp_congest'
+    }
+
+    dataframe.rename(columns=rename_columns, inplace=True)
 
     return DataFrame(dataframe)
