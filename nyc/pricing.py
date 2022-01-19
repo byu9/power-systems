@@ -24,13 +24,6 @@ class Realtime_LBMP_Remote_Archive(Remote_File, Compressed_File):
         Remote_File.__init__(self, url, download_name)
 
 
-
-class DataFrame(pandas.DataFrame):
-    @property
-    def _constructor(self):
-        return DataFrame
-
-
 def read_csv_slices(filenames):
 
     def read_csv(f):
@@ -42,6 +35,9 @@ def read_csv_slices(filenames):
 
     dataframes = [read_csv(f) for f in filenames]
     dataframe = pandas.concat(dataframes, axis='index')
+
+    dataframe.drop_duplicates(inplace=True)
+
     dataframe.index = dataframe.index.tz_localize('EST').tz_convert('UTC')
     dataframe.sort_index(axis='index', inplace=True)
     dataframe.index.rename('utc_time', inplace=True)
@@ -57,4 +53,4 @@ def read_csv_slices(filenames):
 
     dataframe.rename(columns=rename_columns, inplace=True)
 
-    return DataFrame(dataframe).drop_duplicates()
+    return dataframe

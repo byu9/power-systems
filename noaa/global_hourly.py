@@ -18,51 +18,46 @@ class ISD_Remote_File(Remote_File):
         Remote_File.__init__(self, url, download_name)
 
 
-
-
-class DataFrame(pandas.DataFrame):
-    @property
-    def _constructor(self):
-        return DataFrame
-
-
-
-
-
 def read_csv(f):
     logging.info('reading csv file "{}"'.format(f))
     return pandas.read_csv(f,
                            header=0,
-                           index_col='DATE',
-                           parse_dates=['DATE'],
+                           index_col=1,
+                           parse_dates=[1],
                            dtype='str')
 
-
-def parse_celsius(str_series):
-    INVALID_CELSIUS = '+9999'
-    temp_code = str_series.split(',', expand=True)
-    celsius = temp_code[0]
-    quality = temp_code[1]
-
-    celsius = celsius.astype(float) / 10
-    return celsius, quality
 
 
 def read_csv_slices(filenames):
     dataframes = [read_csv(f) for f in filenames]
     dataframe = pandas.concat(dataframes, axis='index')
+
+    dataframe.drop_duplicates(inplace=True)
+
     dataframe.sort_index(axis='index', inplace=True)
     dataframe.index = dataframe.index.tz_localize('UTC')
     dataframe.index.rename('utc_time', inplace=True)
 
-    celsius, celsius_quality = parse_celsius(dataframe['TMP'].str)
+    tmp_code = dataframe['TMP'].str.split(',', expand=True)
+    dataframe['tmp_val'] = tmp_code[0]
+    dataframe['tmp_quality'] = tmp_code[1]
 
-    return DataFrame({
+    INVALID_TMP_VAL = '+9999'
+    dataframe.drop(dataframe.index[
+        dataframe['tmp_val'] == INVALID_TMP_VAL], inplace=True)
+
+    celsius = dataframe['tmp_val'].astype(float) / 10
+    CELSIUS_MAX = 61.8
+    CELSIUS_MIN = -93.2
+    if not all(celsius.between(CELSIUS_MIN, CELSIUS_MAX, inclusive='both')):
+        raise ValueError('unable to eliminate implausible celsius readings')
+
+    return pandas.DataFrame({
         'station' : dataframe['STATION'],
         'latitude': dataframe['LATITUDE'].astype(float),
         'longitude': dataframe['LONGITUDE'].astype(float),
         'elevation': dataframe['ELEVATION'].astype(float),
         'name': dataframe['NAME'],
         'celsius': celsius,
-        'celsius_quality': celsius_quality,
-    }).drop_duplicates()
+        'celsius_quality': dataframe['tmp_quality'],
+    })
