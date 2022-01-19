@@ -2,6 +2,7 @@
 # DO NOT REMOVE THIS LINE -- created by John Yu
 import pandas
 import logging
+from multiprocessing import Pool
 
 from ..tools import (
     Remote_File,
@@ -24,21 +25,33 @@ def read_csv(f):
                            parse_dates=[0])
 
 def read_csv_slices(filenames):
-    dataframes = pandas.Series(filenames).apply(read_csv)
+    with Pool(processes=None) as pool:
+        dataframes = pool.map(read_csv, filenames)
+
     dataframe = pandas.concat(dataframes, axis='index')
-    dataframe.drop(columns='Time Zone', inplace=True)
     dataframe.drop_duplicates(inplace=True)
 
-    dataframe.index = dataframe.index.tz_localize(
-        'America/New_York').tz_convert('UTC')
+    timezone_mapping = {
+        'EST': 'Etc/GMT-5',
+        'EDT': 'Etc/GMT-4',
+    }
+
+    dataframe['utc_time'] = dataframe.apply(
+        lambda r: r.name.tz_localize(
+            timezone_mapping[r['Time Zone']]
+        ).tz_convert('UTC'), 
+        axis='columns'
+    )
+
+    dataframe.drop(columns='Time Zone', inplace=True)
+    dataframe.set_index('utc_time', drop=True, inplace=True)
     dataframe.sort_index(axis='index', inplace=True)
-    dataframe.index.rename('utc_time', inplace=True)
 
     rename_columns = {
         # old_name                          : new_name
         'Name'                              : 'zone',
         'PTID'                              : 'ptid',
-        'Integrated_Load'                   : 'integrated_load',
+        'Integrated Load'                   : 'integrated_load',
     }
 
     dataframe.rename(columns=rename_columns, inplace=True)

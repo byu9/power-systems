@@ -2,6 +2,7 @@
 # DO NOT REMOVE THIS LINE -- created by John Yu
 import pandas
 import logging
+from multiprocessing import Pool
 
 from ..tools import (
     Remote_File,
@@ -29,7 +30,9 @@ def read_csv(f):
 
 
 def read_csv_slices(filenames):
-    dataframes = pandas.Series(filenames).apply(read_csv)
+    with Pool(processes=None) as pool:
+        dataframes = pool.map(read_csv, filenames)
+
     dataframe = pandas.concat(dataframes, axis='index')
 
     dataframe.drop_duplicates(inplace=True)
