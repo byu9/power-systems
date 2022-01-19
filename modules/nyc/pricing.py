@@ -24,16 +24,15 @@ class Realtime_LBMP_Remote_Archive(Remote_File, Compressed_File):
         Remote_File.__init__(self, url, download_name)
 
 
+def read_csv(f):
+    logging.info('reading csv file "{}"'.format(f))
+    return pandas.read_csv(f,
+                           header=0,
+                           index_col=0,
+                           parse_dates=[0])
+
 def read_csv_slices(filenames):
-
-    def read_csv(f):
-        logging.info('reading csv file "{}"'.format(f))
-        return pandas.read_csv(f,
-                               header=0,
-                               index_col=0,
-                               parse_dates=[0])
-
-    dataframes = [read_csv(f) for f in filenames]
+    dataframes = pandas.Series(filenames).apply(read_csv)
     dataframe = pandas.concat(dataframes, axis='index')
 
     dataframe.drop_duplicates(inplace=True)

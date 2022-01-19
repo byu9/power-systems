@@ -29,7 +29,7 @@ def read_csv(f):
 
 
 def read_csv_slices(filenames):
-    dataframes = [read_csv(f) for f in filenames]
+    dataframes = pandas.Series(filenames).apply(read_csv)
     dataframe = pandas.concat(dataframes, axis='index')
 
     dataframe.drop_duplicates(inplace=True)
