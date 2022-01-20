@@ -39,7 +39,7 @@ def read_csv_slices(filenames):
     dataframe['utc_time'] = dataframe.apply(
         lambda r: r.name.tz_localize(
             timezone_mapping[r['Time Zone']]
-        ).tz_convert('UTC'), 
+        ).tz_convert('UTC'),
         axis='columns'
     )
 
