@@ -1,5 +1,6 @@
 # python bytecode
 __pycache__
+.ipynb_checkpoints
 
 # emacs backup files
 *~
