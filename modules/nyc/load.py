@@ -2,6 +2,7 @@
 # DO NOT REMOVE THIS LINE -- created by John Yu
 import pandas
 import logging
+import dateutil.tz as tz
 from multiprocessing import Pool
 
 from ..tools import (
@@ -32,8 +33,8 @@ def read_csv_slices(filenames):
     dataframe.drop_duplicates(inplace=True)
 
     timezone_mapping = {
-        'EST': 'Etc/GMT-5',
-        'EDT': 'Etc/GMT-4',
+        'EST': tz.gettz('EST'),
+        'EDT': tz.gettz('EDT'),
     }
 
     dataframe['utc_time'] = dataframe.apply(
