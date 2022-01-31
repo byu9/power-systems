@@ -35,8 +35,6 @@ def read_csv_slices(filenames):
 
     dataframe = pandas.concat(dataframes, axis='index')
 
-    dataframe.drop_duplicates(inplace=True)
-
     dataframe.sort_index(axis='index', inplace=True)
     dataframe.index = dataframe.index.tz_localize('UTC')
     dataframe.index.rename('utc_time', inplace=True)

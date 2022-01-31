@@ -30,7 +30,6 @@ def read_csv_slices(filenames):
         dataframes = pool.map(read_csv, filenames)
 
     dataframe = pandas.concat(dataframes, axis='index')
-    dataframe.drop_duplicates(inplace=True)
 
     timezone_mapping = {
         'EST': tz.gettz('EST'),

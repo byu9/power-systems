@@ -38,8 +38,6 @@ def read_csv_slices(filenames):
 
     dataframe = pandas.concat(dataframes, axis='index')
 
-    dataframe.drop_duplicates(inplace=True)
-
     dataframe.index = dataframe.index.tz_localize('EST').tz_convert('UTC')
     dataframe.sort_index(axis='index', inplace=True)
     dataframe.index.rename('utc_time', inplace=True)
