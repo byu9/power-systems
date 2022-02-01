@@ -59,7 +59,8 @@ def read_csv_slices(filenames):
         # old_name                          : new_name
         'Name'                              : 'zone',
         'PTID'                              : 'ptid',
-        'Integrated Load'                   : 'integrated_load',
+        'Integrated Load'                   : 'load',
+        'Load'                              : 'load',
     }
 
     dataframe.rename(columns=rename_columns, inplace=True)
