@@ -11,26 +11,29 @@ def is_interactive():
 
 if is_interactive():
     class Multiprocessing_Pool:
-        def __init__(self, *args):
+        def __init__(self):
             from ipyparallel import Cluster
             logging.debug('Using ipyparallel for multiprocessing')
-            self._backend = Cluster(*args)
+            self._backend = Cluster()
 
         def __enter__(self, *args):
-            return self._backend.__enter__(*args)
+            self._client = self._backend.__enter__(*args)
+            return self
 
         def __exit__(self, *args):
             self._backend.__exit__(*args)
 
-        def map(self, *args):
-            return self._backend.map_sync(*args)
+        def map(self, f, seq):
+            view = self._client.load_balanced_view()
+            result = view.map_sync(f, seq)
+            return result
 
 else: # not running interactively
     class Multiprocessing_Pool:
-        def __init__(self, *args):
+        def __init__(self):
             from multiprocessing.pool import Pool
             logging.debug('Using python built-in multiprocessing')
-            self._backend = Pool(*args)
+            self._backend = Pool()
 
         def __enter__(self, *args):
             return self._backend.__enter__(*args)
@@ -38,8 +41,8 @@ else: # not running interactively
         def __exit__(self, *args):
             self._backend.__exit__(*args)
 
-        def map(self, *args):
-            return self._backend.map(*args)
+        def map(self, f, seq):
+            return self._backend.map(f, seq)
 
 
 
