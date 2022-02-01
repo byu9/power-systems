@@ -12,9 +12,9 @@ def is_interactive():
 if is_interactive():
     class Multiprocessing_Pool:
         def __init__(self):
-            from pathos.multiprocessing import ProcessingPool
+            from multiprocess import Pool
             logging.debug('Using pathos multiprocessing')
-            self._backend = ProcessingPool()
+            self._backend = Pool()
 
         def __enter__(self):
             return self._backend.__enter__()
