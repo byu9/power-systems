@@ -19,7 +19,7 @@ class ISD_Remote_File(Remote_File):
 
 def read_csv(filename):
     import pandas
-    logging.info('reading csv file "{}"'.format(f))
+    logging.debug('reading csv file "{}"'.format(f))
     return pandas.read_csv(filename, header=0, index_col=1, parse_dates=[1],
                            dtype='str')
 
@@ -31,6 +31,7 @@ def read_csv_slices(filenames):
         raw_dataframes = pool.map(read_csv, filenames)
     raw_dataframe = pandas.concat(raw_dataframes, axis='index')
 
+    logging.info('Localizing timezone to UTC')
     raw_dataframe.index = raw_dataframe.index.tz_localize('UTC')
     raw_dataframe.index.rename('utc_time', inplace=True)
 

@@ -59,10 +59,10 @@ class Remote_File:
         self.filename = folder / self.download_name
 
         if self.filename.exists():
-            logging.info('Skipped downloading "{}" from "{}"'.format(
+            logging.debug('Skipped downloading "{}" from "{}"'.format(
                 self.filename, self.url))
         else:
-            logging.info('Downloading "{}" from "{}"'.format(
+            logging.debug('Downloading "{}" from "{}"'.format(
                 self.filename, self.url))
 
             urlretrieve(self.url, self.filename)
@@ -81,5 +81,5 @@ class Compressed_File:
         folder = Path(folder)
         folder.mkdir(parents=True, exist_ok=True)
 
-        logging.info('Extracing "{}" into "{}"'.format(self.filename, folder))
+        logging.debug('Extracing "{}" into "{}"'.format(self.filename, folder))
         unpack_archive(self.filename, folder)

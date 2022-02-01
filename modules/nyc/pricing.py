@@ -25,7 +25,7 @@ class Realtime_LBMP_Remote_Archive(Remote_File, Compressed_File):
 
 def read_csv(filename):
     import pandas
-    logging.info('reading csv file "{}"'.format(filename))
+    logging.debug('reading csv file "{}"'.format(filename))
     return pandas.read_csv(filename, header=0, index_col=0, parse_dates=[0])
 
 

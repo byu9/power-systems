@@ -26,8 +26,8 @@ class Real_Time_Load_Remote_Archive(Remote_File, Compressed_File):
 
 def read_csv(filename):
     import pandas
-    logging.info('reading csv file "{}"'.format(filename))
-    return pandas.read_csv(filename, header=0, index_col=0, parse_dates=[0])
+    logging.debug('reading csv file "{}"'.format(filename))
+    return pandas.read_csv(filename, header=0, parse_dates=[0])
 
 
 def read_csv_slices(filenames, pivot_values=None):
@@ -37,7 +37,7 @@ def read_csv_slices(filenames, pivot_values=None):
 
     with Multiprocessing_Pool() as pool:
         dataframes = pool.map(read_csv, filenames)
-    dataframe = pandas.concat(dataframes, axis='index')
+    dataframe = pandas.concat(dataframes, axis='index', ignore_index=True)
 
     timezone_mapping = {
         'EST': dateutil.tz.gettz('EST'),
@@ -46,7 +46,7 @@ def read_csv_slices(filenames, pivot_values=None):
 
     logging.info('Converting timezone to UTC')
     dataframe['utc_time'] = dataframe.apply(
-        lambda r: r.name.tz_localize(
+        lambda r: r['Time Stamp'].tz_localize(
             timezone_mapping[r['Time Zone']]
         ).tz_convert('UTC'),
         axis='columns'
