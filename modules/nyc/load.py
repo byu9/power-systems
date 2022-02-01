@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 # DO NOT REMOVE THIS LINE -- created by John Yu
-import pandas
 import logging
-import dateutil.tz as tz
-from multiprocessing import Pool
 
 from ..tools import (
     Remote_File,
@@ -26,24 +23,28 @@ class Real_Time_Load_Remote_Archive(Remote_File, Compressed_File):
             download_name)
         Remote_File.__init__(self, url, download_name)
 
-def read_csv(f):
-    logging.info('reading csv file "{}"'.format(f))
-    return pandas.read_csv(f,
-                           header=0,
-                           index_col=0,
-                           parse_dates=[0])
 
-def read_csv_slices(filenames):
-    with Pool(processes=None) as pool:
+def read_csv(filename):
+    import pandas
+    logging.info('reading csv file "{}"'.format(filename))
+    return pandas.read_csv(filename, header=0, index_col=0, parse_dates=[0])
+
+
+def read_csv_slices(filenames, pivot_values=None):
+    from ..tools import Multiprocessing_Pool
+    import pandas
+    import dateutil
+
+    with Multiprocessing_Pool() as pool:
         dataframes = pool.map(read_csv, filenames)
-
     dataframe = pandas.concat(dataframes, axis='index')
 
     timezone_mapping = {
-        'EST': tz.gettz('EST'),
-        'EDT': tz.gettz('EDT'),
+        'EST': dateutil.tz.gettz('EST'),
+        'EDT': dateutil.tz.gettz('EDT'),
     }
 
+    logging.info('Converting timezone to UTC')
     dataframe['utc_time'] = dataframe.apply(
         lambda r: r.name.tz_localize(
             timezone_mapping[r['Time Zone']]
@@ -53,6 +54,8 @@ def read_csv_slices(filenames):
 
     dataframe.drop(columns='Time Zone', inplace=True)
     dataframe.set_index('utc_time', drop=True, inplace=True)
+
+    logging.info('Sorting dataframe index')
     dataframe.sort_index(axis='index', inplace=True)
 
     rename_columns = {
@@ -62,7 +65,11 @@ def read_csv_slices(filenames):
         'Integrated Load'                   : 'load',
         'Load'                              : 'load',
     }
-
     dataframe.rename(columns=rename_columns, inplace=True)
+
+    if pivot_values is not None:
+        dataframe = dataframe.pivot_table(index=dataframe.index,
+                                          columns='zone', values=pivot_values)
+        dataframe.rename_axis(None, axis='columns', inplace=True)
 
     return dataframe
