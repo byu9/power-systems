@@ -18,6 +18,14 @@ class Integrated_Real_Time_Load_Remote_Archive(Remote_File, Compressed_File):
             download_name)
         Remote_File.__init__(self, url, download_name)
 
+
+class Real_Time_Load_Remote_Archive(Remote_File, Compressed_File):
+    def __init__(self, month, year):
+        download_name = '{}{}01pal_csv.zip'.format(year, month)
+        url = 'http://mis.nyiso.com/public/csv/pal/{}'.format(
+            download_name)
+        Remote_File.__init__(self, url, download_name)
+
 def read_csv(f):
     logging.info('reading csv file "{}"'.format(f))
     return pandas.read_csv(f,
