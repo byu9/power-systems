@@ -27,33 +27,27 @@ class Real_Time_Load_Remote_Archive(Remote_File, Compressed_File):
 def read_csv(filename):
     import pandas
     logging.debug('reading csv file "{}"'.format(filename))
-    return pandas.read_csv(filename, header=0, parse_dates=[0])
+    return pandas.read_csv(filename, header=0, index_col=0, parse_dates=[0])
 
 
 def read_csv_slices(filenames, pivot_values=None):
     from ..tools import Multiprocessing_Pool
     import pandas
-    import dateutil
 
     with Multiprocessing_Pool() as pool:
         dataframes = pool.map(read_csv, filenames)
-    dataframe = pandas.concat(dataframes, axis='index', ignore_index=True)
+    dataframe = pandas.concat(dataframes, axis='index')
 
-    timezone_mapping = {
-        'EST': dateutil.tz.gettz('EST'),
-        'EDT': dateutil.tz.gettz('EDT'),
+    timezone_has_dst = {
+        'EST': False,
+        'EDT': True,
     }
-    
+
     logging.info('Localizing timezone')
-    dataframe['Time Zone'] = dataframe['Time Zone'].map(timezone_mapping)
-
-    dataframe['time'] = dataframe.apply(
-        lambda r: r['Time Stamp'].tz_localize(r['Time Zone']),
-        axis='columns'
-    )
-
-    dataframe.drop(columns='Time Zone', inplace=True)
-    dataframe.set_index('time', drop=True, inplace=True)
+    dst_mask = dataframe['Time Zone'].map(timezone_has_dst)
+    dataframe.index = dataframe.index.tz_localize(
+        'America/New_York', ambiguous=dst_mask)
+    dataframe.drop(columns=['Time Zone'], inplace=True)
 
     rename_columns = {
         # old_name                          : new_name
