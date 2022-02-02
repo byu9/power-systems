@@ -22,4 +22,4 @@ class Time_Period:
             before(self._end, dataframe.index)
         )
 
-        return dataframe[is_between]
+        return dataframe[index_is_between]
