@@ -43,20 +43,17 @@ def read_csv_slices(filenames, pivot_values=None):
         'EST': dateutil.tz.gettz('EST'),
         'EDT': dateutil.tz.gettz('EDT'),
     }
+    
+    logging.info('Localizing timezone')
+    dataframe['Time Zone'] = dataframe['Time Zone'].map(timezone_mapping)
 
-    logging.info('Converting timezone to UTC')
-    dataframe['utc_time'] = dataframe.apply(
-        lambda r: r['Time Stamp'].tz_localize(
-            timezone_mapping[r['Time Zone']]
-        ).tz_convert('UTC'),
+    dataframe['time'] = dataframe.apply(
+        lambda r: r['Time Stamp'].tz_localize(r['Time Zone']),
         axis='columns'
     )
 
     dataframe.drop(columns='Time Zone', inplace=True)
-    dataframe.set_index('utc_time', drop=True, inplace=True)
-
-    logging.info('Sorting dataframe index')
-    dataframe.sort_index(axis='index', inplace=True)
+    dataframe.set_index('time', drop=True, inplace=True)
 
     rename_columns = {
         # old_name                          : new_name

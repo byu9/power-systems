@@ -37,9 +37,9 @@ def read_csv_slices(filenames, pivot_values=None):
         dataframes = pool.map(read_csv, filenames)
     dataframe = pandas.concat(dataframes, axis='index')
 
-    logging.info('Converting timezone to UTC')
-    dataframe.index = dataframe.index.tz_localize('EST').tz_convert('UTC')
-    dataframe.index.rename('utc_time', inplace=True)
+    logging.info('Localizing timezone')
+    dataframe.index = dataframe.index.tz_localize('EST')
+    dataframe.index.rename('time', inplace=True)
 
     rename_columns = {
         # old_name                          : new_name
@@ -50,9 +50,6 @@ def read_csv_slices(filenames, pivot_values=None):
         'Marginal Cost Congestion ($/MWHr)' : 'lbmp_congest'
     }
     dataframe.rename(columns=rename_columns, inplace=True)
-
-    logging.info('Sorting dataframe index')
-    dataframe.sort_index(axis='index', inplace=True)
 
     if pivot_values is not None:
         dataframe = dataframe.pivot_table(index=dataframe.index,

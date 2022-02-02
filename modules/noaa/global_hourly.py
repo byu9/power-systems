@@ -31,9 +31,9 @@ def read_csv_slices(filenames):
         raw_dataframes = pool.map(read_csv, filenames)
     raw_dataframe = pandas.concat(raw_dataframes, axis='index')
 
-    logging.info('Localizing timezone to UTC')
+    logging.info('Localizing timezone')
     raw_dataframe.index = raw_dataframe.index.tz_localize('UTC')
-    raw_dataframe.index.rename('utc_time', inplace=True)
+    raw_dataframe.index.rename('time', inplace=True)
 
     tmp_code = raw_dataframe['TMP'].str.split(',', n=1, expand=True)
     raw_dataframe['tmp_val']     = tmp_code[0]
