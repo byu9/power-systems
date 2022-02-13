@@ -19,7 +19,7 @@ class ISD_Remote_File(Remote_File):
 
 def read_csv(filename):
     import pandas
-    logging.debug('reading csv file "{}"'.format(f))
+    logging.debug('reading csv file "{}"'.format(filename))
     return pandas.read_csv(filename, header=0, index_col=1, parse_dates=[1],
                            dtype='str')
 
