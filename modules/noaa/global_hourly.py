@@ -45,7 +45,7 @@ def read_csv_slices(filenames):
 
     CELSIUS_MAX = 61.8
     CELSIUS_MIN = -93.2
-    celsius = tmp_val.to_numeric() / 10
+    celsius = pandas.to_numeric(raw_dataframe['tmp_val']) / 10
     if not all(celsius.between(CELSIUS_MIN, CELSIUS_MAX, inclusive='both')):
         raise ValueError('unable to eliminate implausible celsius readings')
 
@@ -53,9 +53,9 @@ def read_csv_slices(filenames):
 
     dataframe['station']         = raw_dataframe['STATION'].astype(str)
     dataframe['name']            = raw_dataframe['NAME'].astype(str)
-    dataframe['latitude']        = raw_dataframe['LATITUDE'].to_numeric()
-    dataframe['longitude']       = raw_dataframe['LONGITUDE'].to_numeric()
-    dataframe['elevation']       = raw_dataframe['ELEVATION'].to_numeric()
+    dataframe['latitude']        = pandas.to_numeric(raw_dataframe['LATITUDE'])
+    dataframe['longitude']       = pandas.to_numeric(raw_dataframe['LONGITUDE'])
+    dataframe['elevation']       = pandas.to_numeric(raw_dataframe['ELEVATION'])
     dataframe['celsius']         = celsius
     dataframe['celsius_quality'] = raw_dataframe['tmp_quality'].astype(str)
 
