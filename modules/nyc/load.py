@@ -47,6 +47,7 @@ def read_csv_slices(filenames, pivot_values=None):
     dst_mask = dataframe['Time Zone'].map(timezone_has_dst)
     dataframe.index = dataframe.index.tz_localize(
         'America/New_York', ambiguous=dst_mask)
+    dataframe.index.name = 'time'
     dataframe.drop(columns=['Time Zone'], inplace=True)
 
     rename_columns = {
