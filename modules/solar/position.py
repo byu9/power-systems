@@ -2,6 +2,7 @@
 # DO NOT REMOVE THIS LINE -- created by John Yu
 #
 # Calculates the earth heliocentric longitude (L), latitude (B), and radius (R)
+# The coordinates are that of the earth with respect to the center of the sun.
 # Implements the algorithm in reference [1]
 #
 # [1] I. Reda and A. Andreas, Solar position algorithm for solar radiation
@@ -275,25 +276,121 @@ _R_tables = (
     _R3_table,
     _R4_table,
 )
-
-_tables = {
-    'L': _L_tables,
-    'B': _B_tables,
-    'R': _R_tables,
+_nutation_table = {
+    # ((Y0, Y1, Y2, Y3, Y4), a, b, c, d),
+    ((0,   0,   0,   0,   1),  -171996,  -174.2,  92025,  8.9),
+    ((-2,  0,   0,   2,   2),  -13187,   -1.6,    5736,   -3.1),
+    ((0,   0,   0,   2,   2),  -2274,    -0.2,    977,    -0.5),
+    ((0,   0,   0,   0,   2),  2062,     0.2,     -895,   0.5),
+    ((0,   1,   0,   0,   0),  1426,     -3.4,    54,     -0.1),
+    ((0,   0,   1,   0,   0),  712,      0.1,     -7,     0),
+    ((-2,  1,   0,   2,   2),  -517,     1.2,     224,    -0.6),
+    ((0,   0,   0,   2,   1),  -386,     -0.4,    200,    0),
+    ((0,   0,   1,   2,   2),  -301,     0,       129,    -0.1),
+    ((-2,  -1,  0,   2,   2),  217,      -0.5,    -95,    0.3),
+    ((-2,  0,   1,   0,   0),  -158,     0,       0,      0),
+    ((-2,  0,   0,   2,   1),  129,      0.1,     -70,    0),
+    ((0,   0,   -1,  2,   2),  123,      0,       -53,    0),
+    ((2,   0,   0,   0,   0),  63,       0,       0,      0),
+    ((0,   0,   1,   0,   1),  63,       0.1,     -33,    0),
+    ((2,   0,   -1,  2,   2),  -59,      0,       26,     0),
+    ((0,   0,   -1,  0,   1),  -58,      -0.1,    32,     0),
+    ((0,   0,   1,   2,   1),  -51,      0,       27,     0),
+    ((-2,  0,   2,   0,   0),  48,       0,       0,      0),
+    ((0,   0,   -2,  2,   1),  46,       0,       -24,    0),
+    ((2,   0,   0,   2,   2),  -38,      0,       16,     0),
+    ((0,   0,   2,   2,   2),  -31,      0,       13,     0),
+    ((0,   0,   2,   0,   0),  29,       0,       0,      0),
+    ((-2,  0,   1,   2,   2),  29,       0,       -12,    0),
+    ((0,   0,   0,   2,   0),  26,       0,       0,      0),
+    ((-2,  0,   0,   2,   0),  -22,      0,       0,      0),
+    ((0,   0,   -1,  2,   1),  21,       0,       -10,    0),
+    ((0,   2,   0,   0,   0),  17,       -0.1,    0,      0),
+    ((2,   0,   -1,  0,   1),  16,       0,       -8,     0),
+    ((-2,  2,   0,   2,   2),  -16,      0.1,     7,      0),
+    ((0,   1,   0,   0,   1),  -15,      0,       9,      0),
+    ((-2,  0,   1,   0,   1),  -13,      0,       7,      0),
+    ((0,   -1,  0,   0,   1),  -12,      0,       6,      0),
+    ((0,   0,   2,   -2,  0),  11,       0,       0,      0),
+    ((2,   0,   -1,  2,   1),  -10,      0,       5,      0),
+    ((2,   0,   1,   2,   2),  -8,       0,       3,      0),
+    ((0,   1,   0,   2,   2),  7,        0,       -3,     0),
+    ((-2,  1,   1,   0,   0),  -7,       0,       0,      0),
+    ((0,   -1,  0,   2,   2),  -7,       0,       3,      0),
+    ((2,   0,   0,   2,   1),  -7,       0,       3,      0),
+    ((2,   0,   1,   0,   0),  6,        0,       0,      0),
+    ((-2,  0,   2,   2,   2),  6,        0,       -3,     0),
+    ((-2,  0,   1,   2,   1),  6,        0,       -3,     0),
+    ((2,   0,   -2,  0,   1),  -6,       0,       3,      0),
+    ((2,   0,   0,   0,   1),  -6,       0,       3,      0),
+    ((0,   -1,  1,   0,   0),  5,        0,       0,      0),
+    ((-2,  -1,  0,   2,   1),  -5,       0,       3,      0),
+    ((-2,  0,   0,   0,   1),  -5,       0,       3,      0),
+    ((0,   0,   2,   2,   1),  -5,       0,       3,      0),
+    ((-2,  0,   2,   0,   1),  4,        0,       0,      0),
+    ((-2,  1,   0,   2,   1),  4,        0,       0,      0),
+    ((0,   0,   1,   -2,  0),  4,        0,       0,      0),
+    ((-1,  0,   1,   0,   0),  -4,       0,       0,      0),
+    ((-2,  1,   0,   0,   0),  -4,       0,       0,      0),
+    ((1,   0,   0,   0,   0),  -4,       0,       0,      0),
+    ((0,   0,   1,   2,   0),  3,        0,       0,      0),
+    ((0,   0,   -2,  2,   2),  -3,       0,       0,      0),
+    ((-1,  -1,  1,   0,   0),  -3,       0,       0,      0),
+    ((0,   1,   1,   0,   0),  -3,       0,       0,      0),
+    ((0,   -1,  1,   2,   2),  -3,       0,       0,      0),
+    ((2,   -1,  -1,  2,   2),  -3,       0,       0,      0),
+    ((0,   0,   3,   2,   2),  -3,       0,       0,      0),
+    ((2,   -1,  0,   2,   2),  -3,       0,       0,      0),
 }
 
-from math import (
-    cos,
-    pi,
+_nutation_series = (
+    (297.85036,  445267.111480, -0.0019142,  189474),
+    (357.52772,  35999.0503040, -0.0001603, -300000),
+    (134.96298,  477198.867398,  0.0086972,  56250 ),
+    ( 93.27191,  483202.017538, -0.0036825,  327270),
+    (125.04452, -1934.136261,    0.0020708,  450000),
 )
 
-def _from_tables(symbol, JME):
+_epsilon0_series = (
+    84381.448,
+    -4680.93,
+    -1.55,
+    1999.25,
+    -51.38,
+    -249.67,
+    -39.05,
+    7.12,
+    27.87,
+    5.79,
+    2.45
+)
+
+from mpmath import mp
+mp.dps=50
+cos=mp.cos
+sin=mp.sin
+atan2=mp.atan2
+pi=mp.pi
+tan=mp.tan
+degrees = mp.degrees
+radians = mp.radians
+asin=mp.asin
+# from math import (
+#     cos,
+#     sin,
+#     atan,
+#     pi,
+# )
+
+from functools import cached_property
+
+def _from_helio_tables(tables, JME):
     coeffs = [
         sum(
             A * cos(B + C * JME)
             for (A, B, C) in table
         )
-        for table in _tables[symbol]
+        for table in tables
     ]
 
     power_series_sum = sum(
@@ -304,11 +401,173 @@ def _from_tables(symbol, JME):
     return power_series_sum
 
 
-# Input: Julian Ephemeris Millennium (JME)
-# Output: Earth heliocentric longitude (L), latitude (B) and radius (R)
-def heliocentric_vector(JME):
-    L = _from_tables('L', JME) / pi * 180 % 360
-    B = _from_tables('B', JME) / pi * 180
-    R = _from_tables('R', JME)
 
-    return (L, B, R)
+class Solar_Position:
+    def __init__(self, julian):
+        self._julian = julian
+
+    @property
+    def mean_heliocentric_longitude(self):
+        return self._L
+
+    @property
+    def mean_heliocentric_latitude(self):
+        return self._B
+
+    @property
+    def mean_radius(self):
+        return self._R
+
+    @property
+    def mean_geocentric_longitude(self):
+        return self._Theta
+
+    @property
+    def mean_geocentric_latitude(self):
+        return self._beta
+
+    @property
+    def apparent_geocentric_longitude(self):
+        return self._lambda
+
+    @property
+    def greenwich_sidereal_time(self):
+        return self._nu
+
+    @property
+    def geocentric_right_ascension(self):
+        return self._alpha
+
+    @property
+    def geocentric_declination(self):
+        return self._delta
+
+    @cached_property
+    def _L(self):
+        return degrees(
+            _from_helio_tables(_L_tables, self._julian._JME)
+        ) % 360
+
+    @cached_property
+    def _B(self):
+        return degrees(
+            _from_helio_tables(_B_tables, self._julian._JME)
+        )
+
+    @cached_property
+    def _R(self):
+        return _from_helio_tables(_R_tables, self._julian._JME)
+
+    @cached_property
+    def _Theta(self):
+        return (self._L + 180) % 360
+
+    @cached_property
+    def _beta(self):
+        return -self._B
+
+    @cached_property
+    def _lambda(self):
+        return self._Theta + self._Delta_Psi + self._Delta_tau
+
+    @cached_property
+    def _X(self):
+        return [
+            c0 +
+            c1 * self._julian._JCE +
+            c2 * self._julian._JCE**2 +
+            self._julian._JCE**3 / c3
+            for c0, c1, c2, c3 in _nutation_series
+        ]
+
+    @cached_property
+    def _Delta_Psi(self):
+        # nutation in longitude (degrees)
+        return sum(
+            (a + b * self._julian._JCE) * sin(radians(sum(
+                x * y
+                for x, y in zip(self._X, Y)
+            )))
+
+            for Y, a, b, _, _ in _nutation_table
+        ) / 36000000
+
+    @cached_property
+    def _Delta_epsilon(self):
+        # nutation in obliquity
+        return sum(
+            (c + d * self._julian._JCE) * cos(radians(sum(
+                x * y
+                for x, y in zip(self._X, Y)
+            )))
+
+            for Y, _, _, c, d in _nutation_table
+        ) / 36000000
+
+    @cached_property
+    def _Delta_tau(self):
+        # aberration correction (degrees)
+        return -20.4898 / 3600 / self._R
+
+    @cached_property
+    def _epsilon0(self):
+        U = self._julian._JME / 10
+        return sum(
+            coeff * U**power
+            for power, coeff in enumerate(_epsilon0_series)
+        )
+
+    @cached_property
+    def _epsilon(self):
+        return self._epsilon0 / 3600 + self._Delta_epsilon
+
+    @cached_property
+    def _nu0(self):
+        # mean Greenwich sidereal time (degrees)
+        return (
+            280.46061837                                   +
+            360.98564736629 * (self._julian._JD - 2451545) +
+            0.000387933 * self._julian._JC**2              -
+            self._julian._JC**3 / 38710000
+        ) % 360
+
+    @cached_property
+    def _nu(self):
+        # apparent Greenwich sidereal time (degrees)
+        return self._nu0 + self._Delta_Psi * cos(self._epsilon)
+
+    @cached_property
+    def _alpha(self):
+        epsilon_rad = radians(self._epsilon)
+        lambda_rad = radians(self._lambda)
+
+        # sun right ascension (degrees)
+        return degrees(atan2(
+            y=(sin(lambda_rad) * cos(epsilon_rad) -
+               tan(radians(self._beta)) * sin(epsilon_rad)),
+            x=cos(lambda_rad)
+        )) % 360
+
+    @cached_property
+    def _delta(self):
+        beta_rad = radians(self._beta)
+        epsilon_rad = radians(self._epsilon)
+
+        # geocentric sun delination (degrees)
+        return degrees(asin(
+            sin(beta_rad) * cos(epsilon_rad) +
+            cos(beta_rad) * sin(epsilon_rad) *
+            sin(radians(self._lambda))
+        ))
+
+    @cached_property
+    def _xi(self):
+        return 8.794 / 3600 / self._R
+
+
+    def _u(self, lat):
+        return atan(0 . 99664719)
+
+
+    def _H(self, lon):
+        return self._nu + self._sigma - self._alpha
