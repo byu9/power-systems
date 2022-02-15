@@ -33,7 +33,7 @@ else: # not running interactively
             self._backend = Pool()
 
         def __enter__(self):
-            return self._backend.__enter__(*args)
+            return self._backend.__enter__()
 
         def __exit__(self, *args):
             self._backend.__exit__(*args)
