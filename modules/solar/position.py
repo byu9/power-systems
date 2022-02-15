@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 # DO NOT REMOVE THIS LINE -- created by John Yu
 #
-# Calculates the earth heliocentric longitude (L), latitude (B), and radius (R)
-# The coordinates are that of the earth with respect to the center of the sun.
+# Calculates the solar position for a given observer location and date time.
 # Implements the algorithm in reference [1]
 #
 # [1] I. Reda and A. Andreas, Solar position algorithm for solar radiation
 #     applications. Solar Energy, vol. 76, no. 5, pp. 577-589, 2004.
+#
+from math import (
+    cos, sin, tan, asin, acos, atan, atan2,
+    degrees, radians
+)
+
+from functools import cached_property
 
 _L0_table = (
     # (A, B, C),
@@ -365,25 +371,6 @@ _epsilon0_series = (
     2.45
 )
 
-from mpmath import mp
-mp.dps=50
-cos=mp.cos
-sin=mp.sin
-atan2=mp.atan2
-pi=mp.pi
-tan=mp.tan
-degrees = mp.degrees
-radians = mp.radians
-asin=mp.asin
-# from math import (
-#     cos,
-#     sin,
-#     atan,
-#     pi,
-# )
-
-from functools import cached_property
-
 def _from_helio_tables(tables, JME):
     coeffs = [
         sum(
@@ -534,7 +521,7 @@ class Solar_Position:
     @cached_property
     def _nu(self):
         # apparent Greenwich sidereal time (degrees)
-        return self._nu0 + self._Delta_Psi * cos(self._epsilon)
+        return self._nu0 + self._Delta_Psi * cos(radians(self._epsilon))
 
     @cached_property
     def _alpha(self):
@@ -543,9 +530,9 @@ class Solar_Position:
 
         # sun right ascension (degrees)
         return degrees(atan2(
-            y=(sin(lambda_rad) * cos(epsilon_rad) -
-               tan(radians(self._beta)) * sin(epsilon_rad)),
-            x=cos(lambda_rad)
+            (sin(lambda_rad) * cos(epsilon_rad) -
+             tan(radians(self._beta)) * sin(epsilon_rad)),
+            cos(lambda_rad)
         )) % 360
 
     @cached_property
@@ -561,13 +548,161 @@ class Solar_Position:
         ))
 
     @cached_property
+    def _H(self):
+        return (self._nu + self._sigma - self._alpha) % 360
+
+    @cached_property
+    def _H_prime(self):
+        return self._H - self._Delta_alpha
+
+    @cached_property
     def _xi(self):
         return 8.794 / 3600 / self._R
 
+    @cached_property
+    def _u(self):
+        return atan(0.99664719 * tan(radians(self._phi)))
 
-    def _u(self, lat):
-        return atan(0 . 99664719)
+    @cached_property
+    def _x(self):
+        return (
+            cos(self._u) +
+            self._E / 6378140 * cos(radians(self._phi))
+        )
+
+    @cached_property
+    def _y(self):
+        return (
+            0.99664719 * sin(self._u) +
+            self._E / 6378140 * sin(self._phi)
+        )
+
+    @cached_property
+    def _Delta_alpha(self):
+        xi_radians = radians(self._xi)
+        H_radians = radians(self._H)
+
+        return degrees(atan2(
+            -self._x * sin(xi_radians) * sin(H_radians),
+
+            cos(radians(self._delta)) -
+            self._x * sin(xi_radians) * cos(H_radians)
+        ))
+
+    @cached_property
+    def _alpha_prime(self):
+        return self._alpha + self._Delta_alpha
+
+    @cached_property
+    def _delta_prime(self):
+        H_rad = radians(self._H)
+        delta_rad = radians(self._delta)
+        xi_rad = radians(self._xi)
+        Delta_alpha_rad = radians(self._Delta_alpha)
+
+        return degrees(atan2(
+            (sin(delta_rad) - self._y * sin(xi_rad)) * cos(Delta_alpha_rad),
+            cos(delta_rad) - self._x * sin(xi_rad) * cos(H_rad)
+        ))
+
+    @cached_property
+    def _e0(self):
+        phi_rad = radians(self._phi)
+        delta_prime_rad = radians(self._delta_prime)
+        H_prime_rad = radians(self._H_prime)
+        return degrees(asin(
+            sin(phi_rad) * sin(delta_prime_rad) +
+            cos(phi_rad) * cos(delta_prime_rad) * cos(H_prime_rad)
+        ))
+
+    @cached_property
+    def _Delta_e(self):
+        # atmospheric refraction correction
+        return self._P /1010 * 283 / (273 + self._T) * 1.02 / 60 / tan(
+            radians(self._e0 + 10.3 / (self._e0 + 5.11)))
+
+    @cached_property
+    def _e(self):
+        return self._e0 + self._Delta_e
+
+    @cached_property
+    def _theta(self):
+        return 90 - self._e
+
+    @cached_property
+    def _Gamma(self):
+        H_prime_rad = radians(self._H_prime)
+        phi_rad = radians(self._phi)
+        delta_prime_rad = radians(self._delta_prime)
+        return degrees(atan2(
+            sin(H_prime_rad),
+            cos(H_prime_rad) * sin(phi_rad) -
+            tan(delta_prime_rad) * cos(phi_rad)
+        )) % 360
+
+    @cached_property
+    def _Phi(self):
+        return (self._Gamma + 180) % 360
+
+    @cached_property
+    def _I(self):
+        theta_rad = radians(self._theta)
+        gamma_term = radians(self._Gamma - self._gamma)
+        omega_rad = radians(self._omega)
+        return degrees(acos(
+            cos(theta_rad) * cos(omega_rad) +
+            sin(omega_rad) * sin(theta_rad) * cos(gamma_term)
+        ))
+
+    @property
+    def topocentric_zenith_angle(self):
+        return self._theta
+
+    @property
+    def topocentric_elevation_angle(self):
+        return self._e
+
+    @property
+    def topocentric_azimuth_angle(self):
+        return self._Gamma
+
+    @cached_property
+    def equation_of_time(self):
+        M = (
+            280.4664567 +
+            360007.6982779 * self._julian._JME +
+            0.03032028 * self._julian._JME**2 +
+            self._julian._JME**3 / 49931 +
+            self._julian._JME**4 / -15300 +
+            self._julian._JME**5 / -2000000
+        )
+
+        return (M - 0.0057183 - self._alpha +
+                self._Delta_Psi * cos(radians(self._epsilon))) * 4 % 1440
 
 
-    def _H(self, lon):
-        return self._nu + self._sigma - self._alpha
+class Observer_Solar_Position:
+    def __init__(self, latitude, longitude, elevation,
+                 annual_millibar, avg_celsius,
+                 hori_slope, azimuth_angle):
+
+        self._latitude = latitude
+        self._longitude = longitude
+        self._elevation = elevation
+        self._annual_millibar = annual_millibar
+        self._avg_celsius = avg_celsius
+        self._hori_slope = hori_slope
+        self._azimuth_angle = azimuth_angle
+
+
+    def get_solar_position(self, julian):
+        position = Solar_Position(julian)
+        position._sigma = self._longitude
+        position._phi = self._latitude
+        position._E = self._elevation
+        position._P = self._annual_millibar
+        position._T = self._avg_celsius
+        position._omega = self._hori_slope
+        position._gamma = self._azimuth_angle
+
+        return position
