@@ -4,12 +4,13 @@ def save_figure(**kwargs):
     
     def decorator(func):
         def wrapper(*_args, **_kwargs):
-            func(*_args, **_kwargs)
+            ret = func(*_args, **_kwargs)
 
             if 'fname' not in kwargs:
                 kwargs['fname'] = func.__name__ + '.png'
 
             savefig(**kwargs)
+            return ret
         return wrapper
     
     return decorator
