@@ -12,7 +12,10 @@ from math import (
     degrees, radians
 )
 
-from functools import cached_property
+try:
+    from functools import cached_property
+except ImportError:
+    from backports.cached_property import cached_property
 
 _L0_table = (
     # (A, B, C),

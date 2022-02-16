@@ -5,7 +5,16 @@
 # between Earth rotation time and Terrestrial Time (delta_T) published in the
 # yearly Astronomical Alamanac.
 from pandas import Timestamp
-from functools import cached_property, cache
+
+try:
+    from functools import lru_cache
+except ImportError:
+    from backports.functools_lru_cache import lru_cache
+
+try:
+    from functools import cached_property
+except ImportError:
+    from backports.cached_property import cached_property
 
 #
 # Corrections between Terristrial Time (TT), Universal Time (UTC) and
