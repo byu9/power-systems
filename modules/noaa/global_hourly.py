@@ -4,9 +4,10 @@ import logging
 
 from ..tools import (
     Remote_File,
+    Compressed_File,
 )
 
-class ISD_Remote_File(Remote_File):
+class ISD_Remote_File(Remote_File, Compressed_File):
     def __init__(self, year, station):
         download_name = '{}-{}.csv'.format(year, station)
         url = (
@@ -15,6 +16,16 @@ class ISD_Remote_File(Remote_File):
         ).format(year, station)
 
         Remote_File.__init__(self, url, download_name)
+
+    def extract_into(self, folder):
+        from pathlib import Path
+        from shutil import copy
+
+        folder = Path(folder)
+        folder.mkdir(parents=True, exist_ok=True)
+
+        logging.debug('Extracing "{}" into "{}"'.format(self.filename, folder))
+        copy(self.filename, folder)
 
 
 def read_csv(filename):
