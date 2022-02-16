@@ -26,6 +26,7 @@ def read_csv(filename):
 def read_csv_slices(filenames):
     from ..tools import Multiprocessing_Pool
     import pandas
+    from numpy import NaN
 
     with Multiprocessing_Pool() as pool:
         raw_dataframes = pool.map(read_csv, filenames)
@@ -36,18 +37,28 @@ def read_csv_slices(filenames):
     raw_dataframe.index.rename('time', inplace=True)
 
     tmp_code = raw_dataframe['TMP'].str.split(',', n=1, expand=True)
-    raw_dataframe['tmp_val']     = tmp_code[0]
-    raw_dataframe['tmp_quality'] = tmp_code[1]
+    tmp_val     = tmp_code[0]
+    tmp_quality = tmp_code[1]
 
     INVALID_TMP_VAL = '+9999'
-    drop_mask = (raw_dataframe['tmp_val'] == INVALID_TMP_VAL)
-    raw_dataframe.drop(raw_dataframe.index[drop_mask], inplace=True)
+    tmp_val[tmp_val == INVALID_TMP_VAL] = NaN
 
     CELSIUS_MAX = 61.8
     CELSIUS_MIN = -93.2
-    celsius = pandas.to_numeric(raw_dataframe['tmp_val']) / 10
-    if not all(celsius.between(CELSIUS_MIN, CELSIUS_MAX, inclusive='both')):
-        raise ValueError('unable to eliminate implausible celsius readings')
+    celsius = pandas.to_numeric(tmp_val) / 10
+    celsius[~celsius.between(CELSIUS_MIN, CELSIUS_MAX, inclusive='both')] = NaN
+
+    dew_code = raw_dataframe['DEW'].str.split(',', n=1, expand=True)
+    dew_val     = dew_code[0]
+    dew_quality = dew_code[1]
+
+    INVALID_DEW_VAL = '+9999'
+    dew_val[dew_val == INVALID_DEW_VAL] = NaN
+
+    DEW_MAX = 36.8
+    DEW_MIN = -98.2
+    dew = pandas.to_numeric(dew_val) / 10
+    dew[~dew.between(DEW_MIN, DEW_MAX, inclusive='both')] = NaN
 
     dataframe = pandas.DataFrame(index=raw_dataframe.index)
 
@@ -57,7 +68,9 @@ def read_csv_slices(filenames):
     dataframe['longitude']       = pandas.to_numeric(raw_dataframe['LONGITUDE'])
     dataframe['elevation']       = pandas.to_numeric(raw_dataframe['ELEVATION'])
     dataframe['celsius']         = celsius
-    dataframe['celsius_quality'] = raw_dataframe['tmp_quality'].astype(str)
+    dataframe['celsius_quality'] = tmp_quality
+    dataframe['dew']             = dew
+    dataframe['dew_quality']     = dew_quality
 
     logging.info('Sorting dataframe index')
     dataframe.sort_index(axis='index', inplace=True)
